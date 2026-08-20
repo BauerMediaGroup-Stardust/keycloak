@@ -1,3 +1,58 @@
+# Time offset in Keycloak dev container
+
+## 1. Build the provider jar
+
+```sh
+./mvnw install -pl test-framework/remote-providers -am -DskipTests
+```
+
+Jar location: `test-framework/remote-providers/target/keycloak-test-framework-remote-providers-<version>.jar`
+
+## 2. Start Keycloak with the jar mounted (example, use in kube obviously)
+
+```sh
+docker run -p 8080:8080 \
+  -e KEYCLOAK_ADMIN=admin \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  -v /home/oliver/github/keycloak/test-framework/remote-providers/target/keycloak-test-framework-remote-providers-<version>.jar:/opt/keycloak/providers/timeoffset.jar \
+  quay.io/keycloak/keycloak:latest \
+  start-dev
+```
+
+Use `start-dev` (or `start` without `--optimized`) so the provider gets picked up automatically on boot.
+
+## 3. Set the time offset
+
+```sh
+curl -X PUT http://localhost:8080/realms/master/testing-timeoffset \
+  -H 'Content-Type: application/json' \
+  -d '{"offset": 3600}'
+```
+
+`offset` is in seconds, relative to real time.
+
+## 4. Read the current offset
+
+```sh
+curl http://localhost:8080/realms/master/testing-timeoffset
+```
+
+## 5. Reset
+
+```sh
+curl -X PUT http://localhost:8080/realms/master/testing-timeoffset \
+  -H 'Content-Type: application/json' \
+  -d '{"offset": 0}'
+
+
+----
+
+----
+
+----
+
+
+
 ![Keycloak](https://github.com/keycloak/keycloak-misc/blob/main/logo/logo.svg)
 
 ![GitHub Release](https://img.shields.io/github/v/release/keycloak/keycloak?label=latest%20release)
